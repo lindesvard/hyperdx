@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<clickhouse>
+    <storage_configuration>
+        <disks>
+            <default>
+            </default>
+            <!-- Cold disk for historical data -->
+            <cold_disk>
+                <path>/var/lib/clickhouse-cold/</path>
+                <keep_free_space_bytes>107374182400</keep_free_space_bytes> <!-- 100GB -->
+            </cold_disk>
+        </disks>
+        
+        <policies>
+            <!-- Tiered storage policy -->
+            <tiered_storage>
+                <volumes>
+                    <hot_volume>
+                        <disk>default</disk>
+                        <max_data_part_size_bytes>107374182400</max_data_part_size_bytes> <!-- 100GB -->
+                    </hot_volume>
+                    <cold_volume>
+                        <disk>cold_disk</disk>
+                        <perform_ttl_move_on_insert>0</perform_ttl_move_on_insert>
+                    </cold_volume>
+                </volumes>
+                <move_factor>0.3</move_factor> <!-- Move when hot disk is 70% full -->
+            </tiered_storage>
+        </policies>
+    </storage_configuration>
+    
+    <!-- Set default storage policy -->
+    <default_storage_policy>tiered_storage</default_storage_policy>
+</clickhouse>

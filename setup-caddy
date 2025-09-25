@@ -1,0 +1,55 @@
+#!/bin/bash
+# HyperDX Caddy Setup Script
+
+set -e
+
+DOMAIN=$1
+
+echo "🚀 Setting up HyperDX with Caddy for $DOMAIN"
+echo "✨ Caddy automatically handles SSL certificates - no manual setup needed!"
+echo "OSTYPE: $OSTYPE"
+# Create .env file if it doesn't exist
+echo "📝 Creating .env file from template..."
+# Update HYPERDX_APP_URL and HYPERDX_OTEL_ENDPOINT with https:// prefix
+# Cross-platform sed command
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  echo "Running sed on macOS"
+    sed -i '' "s#HYPERDX_APP_URL=.*#HYPERDX_APP_URL=https://$DOMAIN#" .env
+    sed -i '' "s#HYPERDX_OTEL_ENDPOINT=.*#HYPERDX_OTEL_ENDPOINT=https://otel.$DOMAIN#" .env
+else
+  echo "Running sed on Linux"
+    sed -i "s#HYPERDX_APP_URL=.*#HYPERDX_APP_URL=https://$DOMAIN#" .env
+    sed -i "s#HYPERDX_OTEL_ENDPOINT=.*#HYPERDX_OTEL_ENDPOINT=https://otel.$DOMAIN#" .env
+fi
+
+# Do a search and replace in the Caddyfile
+cp docker/caddy/Caddyfile.tmp docker/caddy/Caddyfile
+# Cross-platform sed command
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' "s#__DOMAIN__#$DOMAIN#g" docker/caddy/Caddyfile
+else
+    sed -i "s#__DOMAIN__#$DOMAIN#g" docker/caddy/Caddyfile
+fi
+
+# Check /etc/hosts entry
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  if ! grep -q "$DOMAIN" /etc/hosts; then
+      echo "🌐 Adding $DOMAIN to /etc/hosts..."
+      echo "127.0.0.1 $DOMAIN" | sudo tee -a /etc/hosts
+  else
+      echo "✅ $DOMAIN already in /etc/hosts"
+  fi
+  # Set up storage directories
+  echo "💾 Setting up storage directories..."
+  sudo mkdir -p /var/lib/clickhouse
+  sudo mkdir -p /var/lib/clickhouse-cold
+  sudo chown -R 101:101 /var/lib/clickhouse /var/lib/clickhouse-cold || true
+fi
+
+
+echo ""
+echo "🎉 Setup complete! You can now start HyperDX with:"
+echo "   docker-compose up -d"
+echo ""
+echo "🌐 Access your HyperDX instance at:"
+echo "   $DOMAIN"

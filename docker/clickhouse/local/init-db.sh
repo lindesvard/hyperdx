@@ -50,8 +50,8 @@ ENGINE = MergeTree
 PARTITION BY toDate(TimestampTime)
 PRIMARY KEY (ServiceName, TimestampTime)
 ORDER BY (ServiceName, TimestampTime, Timestamp)
-TTL TimestampTime + toIntervalDay(30)
-SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1;
+TTL TimestampTime + toIntervalDay(187) DELETE
+SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1, storage_policy = 'tiered_storage';
 
 CREATE TABLE IF NOT EXISTS ${DATABASE}.otel_traces
 (
@@ -90,8 +90,8 @@ CREATE TABLE IF NOT EXISTS ${DATABASE}.otel_traces
 ENGINE = MergeTree
 PARTITION BY toDate(Timestamp)
 ORDER BY (ServiceName, SpanName, toDateTime(Timestamp))
-TTL toDate(Timestamp) + toIntervalDay(30)
-SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1;
+TTL Timestamp + toIntervalDay(187) DELETE
+SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1, storage_policy = 'tiered_storage';
 
 CREATE TABLE ${DATABASE}.hyperdx_sessions
 (
@@ -127,6 +127,6 @@ ENGINE = MergeTree
 PARTITION BY toDate(TimestampTime)
 PRIMARY KEY (ServiceName, TimestampTime)
 ORDER BY (ServiceName, TimestampTime, Timestamp)
-TTL TimestampTime + toIntervalDay(30)
-SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1
+TTL TimestampTime + toIntervalDay(187) DELETE
+SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1, storage_policy = 'tiered_storage'
 EOFSQL

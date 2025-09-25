@@ -109,8 +109,8 @@ const connectClickhouse = async () => {
       PARTITION BY toDate(TimestampTime)
       PRIMARY KEY (ServiceName, TimestampTime)
       ORDER BY (ServiceName, TimestampTime, Timestamp)
-      TTL TimestampTime + toIntervalDay(3)
-      SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1
+      TTL TimestampTime + toIntervalDay(187) DELETE
+      SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1, storage_policy = 'tiered_storage'
     `,
     // Recommended for cluster usage to avoid situations
     // where a query processing error occurred after the response code
@@ -151,8 +151,8 @@ const connectClickhouse = async () => {
       ENGINE = MergeTree
       PARTITION BY toDate(TimeUnix)
       ORDER BY (ServiceName, MetricName, Attributes, toUnixTimestamp64Nano(TimeUnix))
-      TTL toDateTime(TimeUnix) + toIntervalDay(3)
-      SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1
+      TTL TimeUnix + toIntervalDay(187) DELETE
+      SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1, storage_policy = 'tiered_storage'
     `,
     // Recommended for cluster usage to avoid situations
     // where a query processing error occurred after the response code
@@ -195,8 +195,8 @@ const connectClickhouse = async () => {
       ENGINE = MergeTree
       PARTITION BY toDate(TimeUnix)
       ORDER BY (ServiceName, MetricName, Attributes, toUnixTimestamp64Nano(TimeUnix))
-      TTL toDateTime(TimeUnix) + toIntervalDay(15)
-      SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1
+      TTL TimeUnix + toIntervalDay(187) DELETE
+      SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1, storage_policy = 'tiered_storage'
     `,
     // Recommended for cluster usage to avoid situations
     // where a query processing error occurred after the response code
@@ -243,8 +243,8 @@ const connectClickhouse = async () => {
       ENGINE = MergeTree
       PARTITION BY toDate(TimeUnix)
       ORDER BY (ServiceName, MetricName, Attributes, toUnixTimestamp64Nano(TimeUnix))
-      TTL toDateTime(TimeUnix) + toIntervalDay(3)
-      SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1
+      TTL TimeUnix + toIntervalDay(187) DELETE
+      SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1, storage_policy = 'tiered_storage'
     `,
     // Recommended for cluster usage to avoid situations
     // where a query processing error occurred after the response code

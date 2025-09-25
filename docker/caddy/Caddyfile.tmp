@@ -1,0 +1,78 @@
+# Caddyfile for HyperDX
+# Caddy automatically handles HTTPS with Let's Encrypt for production
+# and self-signed certificates for local development
+
+# Replace this domain with your actual domain
+__DOMAIN__ {
+    # Enable compression
+    encode gzip
+    
+    # Security headers
+    header {
+        # Remove server information
+        -Server
+        
+        # Security headers
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        X-XSS-Protection "1; mode=block"
+        
+        # HSTS (only for production)
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    }
+    
+    # Reverse proxy to HyperDX app
+    reverse_proxy app:8000
+    
+    # Logging
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 10MB
+            roll_keep 5
+        }
+        format console
+    }
+}
+
+# OpenTelemetry collector subdomain
+otel.__DOMAIN__ {
+    # Enable compression
+    encode gzip
+    
+    # Security headers
+    header {
+        # Remove server information
+        -Server
+        
+        # Security headers
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        X-XSS-Protection "1; mode=block"
+        
+        # HSTS (only for production)
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    }
+    
+    # Reverse proxy all traffic to OTEL collector
+    reverse_proxy otel-collector:4318
+    
+    # Logging
+    log {
+        output file /var/log/caddy/otel_access.log {
+            roll_size 10MB
+            roll_keep 5
+        }
+        format console
+    }
+}
+
+# Redirect all other domains to the main domain (optional)
+www.__DOMAIN__ {
+    redir https://__DOMAIN__{uri} permanent
+}
+
+# For local development, you can also add:
+# localhost:8443 {
+#     tls internal
+#     reverse_proxy app:8000
+# }

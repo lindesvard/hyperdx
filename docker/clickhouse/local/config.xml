@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <clickhouse>
     <logger>
-        <level>debug</level>
+        <level>warning</level>
         <console>true</console>
         <log remove="remove" />
         <errorlog remove="remove" />
@@ -44,7 +44,7 @@
         <errors>true</errors>
     </prometheus>
 
-    <!-- Query log. Used only for queries with setting log_queries = 1. -->
+     <!-- Query log. Used only for queries with setting log_queries = 1. -->
     <query_log>
         <database>system</database>
         <table>query_log</table>
@@ -97,7 +97,6 @@
         <table>opentelemetry_span_log</table>
         <flush_interval_milliseconds>7500</flush_interval_milliseconds>
     </opentelemetry_span_log>
-
 
     <!-- Crash log. Stores stack traces for fatal errors.
          This table is normally empty. -->

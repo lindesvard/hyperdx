@@ -1,19 +1,20 @@
 name: hdx-oss
 services:
-  # ONLY USED FOR DEMO SSL SETUP
-  # nginx:
-  #   image: nginx:1.27.3
-  #   volumes:
-  #     - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
-  #     - ./docker/nginx/ssl:/etc/nginx/ssl
-  #     - .volumes/nginx_logs:/var/log/nginx
-  #   ports:
-  #     - 80:80
-  #     - 443:443
-  #   networks:
-  #     - internal
-  #   depends_on:
-  #     - app
+  # Caddy reverse proxy for HyperDX with automatic HTTPS
+  caddy:
+    image: caddy:2.7-alpine
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - internal
+    depends_on:
+      - app
+    restart: unless-stopped
   db:
     image: mongo:5.0.14-focal
     volumes:
@@ -44,22 +45,38 @@ services:
     depends_on:
       - ch-server
   app:
-    image: ${HDX_IMAGE_REPO}/${IMAGE_NAME_DOCKERHUB}:${IMAGE_VERSION}
+    build:
+      context: .
+      dockerfile: docker/hyperdx/Dockerfile
+      target: prod
+      args:
+        PORT: ${HYPERDX_API_PORT}
+        CODE_VERSION: ${IMAGE_VERSION:-latest}
+        OTEL_EXPORTER_OTLP_ENDPOINT: ${HYPERDX_OTEL_ENDPOINT:-http://otel-collector:4318}
+      additional_contexts:
+        hyperdx: ./docker/hyperdx
+        api: ./packages/api
+        app: ./packages/app
+    # image: ${HDX_IMAGE_REPO}/${IMAGE_NAME_DOCKERHUB}:${IMAGE_VERSION}
     ports:
       - ${HYPERDX_API_PORT}:${HYPERDX_API_PORT}
       - ${HYPERDX_APP_PORT}:${HYPERDX_APP_PORT}
+      - ${HYPERDX_OPAMP_PORT}:${HYPERDX_OPAMP_PORT}
     environment:
-      FRONTEND_URL: ${HYPERDX_APP_URL}:${HYPERDX_APP_PORT}
       HYPERDX_API_KEY: ${HYPERDX_API_KEY}
       HYPERDX_API_PORT: ${HYPERDX_API_PORT}
       HYPERDX_APP_PORT: ${HYPERDX_APP_PORT}
       HYPERDX_APP_URL: ${HYPERDX_APP_URL}
       HYPERDX_LOG_LEVEL: ${HYPERDX_LOG_LEVEL}
       MINER_API_URL: 'http://miner:5123'
+      HYPERDX_OPAMP_PORT: ${HYPERDX_OPAMP_PORT}
+      HYPERDX_OTEL_EXPORTER_CLICKHOUSE_DATABASE: ${HYPERDX_OTEL_EXPORTER_CLICKHOUSE_DATABASE}
       MONGO_URI: 'mongodb://db:27017/hyperdx'
+      CLICKHOUSE_ENDPOINT: 'tcp://ch-server:9000?dial_timeout=10s'
       SERVER_URL: http://127.0.0.1:${HYPERDX_API_PORT}
       OPAMP_PORT: ${HYPERDX_OPAMP_PORT}
-      OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otel-collector:4318'
+      FRONTEND_URL: ${HYPERDX_APP_URL}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${HYPERDX_OTEL_ENDPOINT:-http://otel-collector:4318}
       OTEL_SERVICE_NAME: 'hdx-oss-app'
       USAGE_STATS_ENABLED: ${USAGE_STATS_ENABLED:-true}
       DEFAULT_CONNECTIONS:
@@ -90,10 +107,14 @@ services:
     volumes:
       - ./docker/clickhouse/local/config.xml:/etc/clickhouse-server/config.xml
       - ./docker/clickhouse/local/users.xml:/etc/clickhouse-server/users.xml
-      - .volumes/ch_data:/var/lib/clickhouse
-      - .volumes/ch_logs:/var/log/clickhouse-server
+      - ./docker/clickhouse/local/storage_configuration.xml:/etc/clickhouse-server/config.d/storage_configuration.xml
+      - /var/lib/clickhouse:/var/lib/clickhouse
+      - /var/lib/clickhouse-cold:/var/lib/clickhouse-cold
     restart: on-failure
     networks:
       - internal
+volumes:
+  caddy_data:
+  caddy_config:
 networks:
   internal:

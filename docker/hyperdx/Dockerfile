@@ -48,7 +48,13 @@ COPY --from=app ./types ./packages/app/types
 ENV NEXT_TELEMETRY_DISABLED 1
 ENV NEXT_OUTPUT_STANDALONE true
 ENV NEXT_PUBLIC_IS_LOCAL_MODE false
-ENV NX_DAEMON=false
+ARG OTEL_EXPORTER_OTLP_ENDPOINT
+ARG OTEL_SERVICE_NAME
+ARG IS_LOCAL_MODE
+ENV NEXT_PUBLIC_OTEL_EXPORTER_OTLP_ENDPOINT $OTEL_EXPORTER_OTLP_ENDPOINT
+ENV NEXT_PUBLIC_OTEL_SERVICE_NAME $OTEL_SERVICE_NAME
+ENV NEXT_PUBLIC_IS_LOCAL_MODE $IS_LOCAL_MODE
+ENV NX_DAEMON false
 RUN npx nx run-many --target=build --projects=@hyperdx/common-utils,@hyperdx/api,@hyperdx/app
 
 # prod ############################################################################################
